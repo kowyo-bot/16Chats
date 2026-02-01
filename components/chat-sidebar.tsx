@@ -66,7 +66,7 @@ function ChatSidebarContent({
     <>
       <SidebarHeader>
         <div className="flex items-center justify-between p-2 group-data-[state=collapsed]:hidden">
-          <h2 className="text-lg font-semibold">Chats</h2>
+          <h2 className="text-lg font-semibold">16 chats</h2>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button

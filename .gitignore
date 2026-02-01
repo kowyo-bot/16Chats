@@ -22,3 +22,7 @@ pnpm-debug.log*
 .gemini
 .claude
 .codex
+.opencode
+/lib/generated/prisma
+
+*.db

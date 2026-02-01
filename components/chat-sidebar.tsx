@@ -65,7 +65,7 @@ function ChatSidebarContent({
   return (
     <>
       <SidebarHeader>
-        <div className="flex items-center justify-between p-2">
+        <div className="flex items-center justify-between p-2 group-data-[state=collapsed]:hidden">
           <h2 className="text-lg font-semibold">Chats</h2>
           <Tooltip>
             <TooltipTrigger asChild>

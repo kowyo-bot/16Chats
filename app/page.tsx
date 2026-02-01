@@ -1,11 +1,16 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
-import { useState } from 'react';
+import {
+  PromptInput,
+  PromptInputTextarea,
+  PromptInputFooter,
+  PromptInputSubmit,
+} from '@/components/ai-elements/prompt-input';
 
 export default function Chat() {
-  const [input, setInput] = useState('');
-  const { messages, sendMessage } = useChat();
+  const { messages, sendMessage, status, stop } = useChat();
+
   return (
     <div className="flex flex-col w-full max-w-md py-24 mx-auto stretch">
       {messages.map(message => (
@@ -20,20 +25,19 @@ export default function Chat() {
         </div>
       ))}
 
-      <form
-        onSubmit={e => {
-          e.preventDefault();
-          sendMessage({ text: input });
-          setInput('');
-        }}
-      >
-        <input
-          className="fixed dark:bg-zinc-900 bottom-0 w-full max-w-md p-2 mb-8 border border-zinc-300 dark:border-zinc-800 rounded shadow-xl"
-          value={input}
-          placeholder="Say something..."
-          onChange={e => setInput(e.currentTarget.value)}
-        />
-      </form>
+      <div className="fixed bottom-0 w-full max-w-md mb-8">
+        <PromptInput
+          onSubmit={({ text }) => {
+            sendMessage({ text });
+          }}
+        >
+          <PromptInputTextarea placeholder="Say something..." />
+          <PromptInputFooter>
+            <div />
+            <PromptInputSubmit status={status} onStop={stop} />
+          </PromptInputFooter>
+        </PromptInput>
+      </div>
     </div>
   );
 }

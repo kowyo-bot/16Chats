@@ -159,8 +159,8 @@ const ConversationDemo = () => {
           </ConversationContent>
           <ConversationScrollButton className="bottom-36" />
         </Conversation>
-        <div className="pointer-events-none absolute bottom-0 left-0 right-2.5 pt-4 pb-8 px-4 bg-background">
-          <div className="pointer-events-auto max-w-4xl mx-auto">
+        <div className="pointer-events-none absolute bottom-0 left-0 right-0 pt-4 pb-8 px-4">
+          <div className="pointer-events-auto max-w-4xl mx-auto bg-background rounded-lg">
             <PromptInput onSubmit={handleSendMessage}>
               <PromptInputTextarea placeholder="Say something..." />
               <PromptInputFooter>

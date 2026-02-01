@@ -103,7 +103,7 @@ function ChatSidebarContent({
                       onClick={() => onChatSelect(chat.id)}
                       tooltip={chat.title}
                     >
-                      <MessageSquare className="size-4" />
+                      <MessageSquare className="size-4 group-data-[state=collapsed]:hidden" />
                       <span className="truncate">{chat.title}</span>
                     </SidebarMenuButton>
                     <SidebarMenuAction

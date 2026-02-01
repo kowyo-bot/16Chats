@@ -82,6 +82,9 @@ function ChatSidebarContent({
             <TooltipContent>New Chat</TooltipContent>
           </Tooltip>
         </div>
+        <div className="hidden group-data-[state=collapsed]:flex items-center justify-center p-2">
+          <MessageSquare className="size-6" />
+        </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>

@@ -1,3 +1,15 @@
 # 16Chats
 
 这个项目是一个简单的 AI 聊天应用，你可以选择和不同 MBTI 的 AI 进行聊天，了解不同 MBTI 性格的说话风格，同时，在 5 轮聊天之后（我也不知道为什么是 5 轮），AI 也可以根据通过和你的聊天进行简单的 MBTI 评估。
+
+## Dev
+
+```bash
+cp .env.example .env.local
+# fill OPENAI_API_KEY
+
+npm install
+npm run dev
+```
+
+Then open http://localhost:3000

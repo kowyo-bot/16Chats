@@ -34,6 +34,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { NavUser } from '@/components/nav-user';
+import { useSession } from '@/lib/auth-client';
 
 export interface Chat {
   id: string;
@@ -58,6 +60,7 @@ function ChatSidebarContent({
   onDeleteChat,
 }: Omit<ChatSidebarProps, 'children'>) {
   const { isMobile } = useSidebar();
+  const { data: session } = useSession();
 
   return (
     <>
@@ -116,12 +119,7 @@ function ChatSidebarContent({
       </SidebarContent>
       <SidebarFooter>
         <SidebarSeparator />
-        <div className="p-2">
-          <Button variant="ghost" className="w-full justify-start gap-2">
-            <Settings className="size-4" />
-            <span>Settings</span>
-          </Button>
-        </div>
+        {session?.user && <NavUser user={session.user} />}
       </SidebarFooter>
       <SidebarRail />
     </>
@@ -138,7 +136,7 @@ export function ChatSidebar({
 }: ChatSidebarProps) {
   return (
     <SidebarProvider>
-      <Sidebar>
+      <Sidebar collapsible="icon">
         <ChatSidebarContent
           chats={chats}
           currentChatId={currentChatId}

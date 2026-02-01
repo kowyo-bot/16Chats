@@ -10,18 +10,20 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^2.0.0",
-    "ai": "^4.0.0",
+    "@ai-sdk/openai": "^3.0.25",
+    "@ai-sdk/react": "^3.0.69",
+    "ai": "^6.0.67",
     "next": "16.1.6",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "eslint": "^9.0.0",
+    "@types/node": "^25.2.0",
+    "@types/react": "^19.2.10",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.2",
     "eslint-config-next": "16.1.6",
-    "typescript": "^5.0.0"
+    "typescript": "^5.9.3"
   }
 }

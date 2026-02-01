@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Conversation,
   ConversationContent,
@@ -22,6 +23,7 @@ import { MessageSquare } from 'lucide-react';
 import { useChat } from '@ai-sdk/react';
 import { nanoid } from 'nanoid';
 import { ChatSidebar, type Chat } from '@/components/chat-sidebar';
+import { useSession } from '@/lib/auth-client';
 
 interface ChatSession {
   id: string;
@@ -29,6 +31,8 @@ interface ChatSession {
 }
 
 const ConversationDemo = () => {
+  const router = useRouter();
+  const { data: session, isPending } = useSession();
   const [chats, setChats] = useState<Chat[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [chatSessions, setChatSessions] = useState<Record<string, ChatSession>>(
@@ -36,6 +40,12 @@ const ConversationDemo = () => {
   );
 
   const { messages, sendMessage, status, setMessages } = useChat();
+
+  useEffect(() => {
+    if (!isPending && !session) {
+      router.push('/login');
+    }
+  }, [session, isPending, router]);
 
   const handleNewChat = () => {
     const newChatId = nanoid();
@@ -104,6 +114,10 @@ const ConversationDemo = () => {
       }, 0);
     }
   };
+
+  if (isPending || !session) {
+    return null;
+  }
 
   return (
     <ChatSidebar

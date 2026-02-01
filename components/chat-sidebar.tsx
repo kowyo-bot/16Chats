@@ -87,12 +87,12 @@ function ChatSidebarContent({
         </div>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup>
+        <SidebarGroup className="group-data-[state=collapsed]:hidden">
           <SidebarGroupLabel>Recent Chats</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {chats.length === 0 ? (
-                <div className="px-2 py-4 text-sm text-muted-foreground text-center group-data-[state=collapsed]:hidden">
+                <div className="px-2 py-4 text-sm text-muted-foreground text-center">
                   No chats yet. Start a new conversation!
                 </div>
               ) : (
@@ -103,7 +103,7 @@ function ChatSidebarContent({
                       onClick={() => onChatSelect(chat.id)}
                       tooltip={chat.title}
                     >
-                      <MessageSquare className="size-4 group-data-[state=collapsed]:hidden" />
+                      <MessageSquare className="size-4" />
                       <span className="truncate">{chat.title}</span>
                     </SidebarMenuButton>
                     <SidebarMenuAction

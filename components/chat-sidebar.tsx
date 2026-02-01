@@ -83,7 +83,7 @@ function ChatSidebarContent({
           </Tooltip>
         </div>
         <div className="hidden group-data-[state=collapsed]:flex items-center justify-center p-2">
-          <MessageSquare className="size-6" />
+          <span className="text-lg font-bold">16</span>
         </div>
       </SidebarHeader>
       <SidebarContent>

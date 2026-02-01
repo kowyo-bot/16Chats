@@ -92,7 +92,7 @@ function ChatSidebarContent({
           <SidebarGroupContent>
             <SidebarMenu>
               {chats.length === 0 ? (
-                <div className="px-2 py-4 text-sm text-muted-foreground text-center">
+                <div className="px-2 py-4 text-sm text-muted-foreground text-center group-data-[state=collapsed]:hidden">
                   No chats yet. Start a new conversation!
                 </div>
               ) : (

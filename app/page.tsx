@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Conversation,
@@ -73,31 +73,40 @@ export default function ConversationDemo() {
     [chats, currentChatId]
   );
 
+  const fetchChats = useCallback(async () => {
+    if (isPending || !session) return;
+    const res = await fetch('/api/chats');
+    if (!res.ok) return;
+    const data = (await res.json()) as { chats: DbChat[] };
+    const nextChats: Chat[] = (data.chats ?? []).map((c) => ({
+      id: c.id,
+      title: c.title,
+      createdAt: new Date(c.createdAt),
+    }));
+    setChats(nextChats);
+    return nextChats;
+  }, [isPending, session]);
+
   useEffect(() => {
     if (!isPending && !session) router.push('/login');
   }, [session, isPending, router]);
 
   useEffect(() => {
-    if (isPending || !session) return;
-
-    (async () => {
-      const res = await fetch('/api/chats');
-      if (!res.ok) return;
-      const data = (await res.json()) as { chats: DbChat[] };
-      const nextChats: Chat[] = (data.chats ?? []).map((c) => ({
-        id: c.id,
-        title: c.title,
-        createdAt: new Date(c.createdAt),
-      }));
-      setChats(nextChats);
-
+    fetchChats().then((nextChats) => {
       // Auto-select the most recent chat (if any)
-      if (nextChats.length > 0 && !currentChatId) {
+      if (nextChats && nextChats.length > 0 && !currentChatId) {
         setCurrentChatId(nextChats[0].id);
       }
-    })();
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, isPending]);
+
+  // Refresh chats list when status changes to ready (to pick up auto-generated titles)
+  useEffect(() => {
+    if (status === 'ready' && currentChatId) {
+      fetchChats();
+    }
+  }, [status, currentChatId, fetchChats]);
 
   // Load messages whenever current chat changes
   useEffect(() => {

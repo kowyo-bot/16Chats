@@ -93,7 +93,6 @@ function ChatSidebarContent({
                     onClick={() => onChatSelect(chat.id)}
                     tooltip={chat.title}
                   >
-                    <MessageSquare className="size-4" />
                     <span className="truncate">{chat.title}</span>
                   </SidebarMenuButton>
                   <SidebarMenuAction

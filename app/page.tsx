@@ -1,169 +1,133 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Conversation,
-  ConversationContent,
-  ConversationEmptyState,
   ConversationScrollButton,
 } from '@/components/ai-elements/conversation';
 import {
-  Message,
-  MessageContent,
-  MessageResponse,
-} from '@/components/ai-elements/message';
-import {
   PromptInput,
-  PromptInputTextarea,
   PromptInputFooter,
   PromptInputSubmit,
+  PromptInputTextarea,
 } from '@/components/ai-elements/prompt-input';
-import { MessageSquare } from 'lucide-react';
-import { useChat } from '@ai-sdk/react';
-import { nanoid } from 'nanoid';
-import { ChatSidebar, type Chat } from '@/components/chat-sidebar';
+import { ChatSidebar } from '@/components/chat-sidebar';
 import { useSession } from '@/lib/auth-client';
+import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
+import { useChats } from '@/hooks/use-chats';
+import { ChatMessageList } from '@/components/chat-message-list';
+import { dbMessagesToUiMessages, type DbMessage } from '@/lib/chat-types';
 
-interface ChatSession {
-  id: string;
-  messages: any[];
-}
-
-const ConversationDemo = () => {
+export default function ConversationDemo() {
   const router = useRouter();
   const { data: session, isPending } = useSession();
-  const [chats, setChats] = useState<Chat[]>([]);
-  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
-  const [chatSessions, setChatSessions] = useState<Record<string, ChatSession>>(
-    {}
+
+  const {
+    chats,
+    currentChatId,
+    setCurrentChatId,
+    fetchChats,
+    handleNewChat,
+    handleDeleteChat,
+  } = useChats(session, isPending);
+
+  const currentChatIdRef = useRef<string | null>(null);
+  currentChatIdRef.current = currentChatId;
+
+  const transport = useMemo(() => {
+    return new DefaultChatTransport({
+      api: '/api/chat',
+      prepareSendMessagesRequest: ({ messages }) => ({
+        body: { messages, chatId: currentChatIdRef.current },
+      }),
+    });
+  }, []);
+
+  const { messages, sendMessage, status, setMessages, regenerate } = useChat({
+    transport,
+  });
+
+  const currentChatTitle = useMemo(
+    () => chats.find((c) => c.id === currentChatId)?.title,
+    [chats, currentChatId]
   );
 
-  const { messages, sendMessage, status, setMessages } = useChat();
-
   useEffect(() => {
-    if (!isPending && !session) {
-      router.push('/login');
-    }
+    if (!isPending && !session) router.push('/login');
   }, [session, isPending, router]);
 
-  const handleNewChat = () => {
-    const newChatId = nanoid();
-    const newChat: Chat = {
-      id: newChatId,
-      title: `Chat ${chats.length + 1}`,
-      createdAt: new Date(),
-    };
+  // Refresh chats list when status changes to ready (to pick up auto-generated titles)
+  useEffect(() => {
+    if (status === 'ready' && currentChatId) {
+      fetchChats();
+    }
+  }, [status, currentChatId, fetchChats]);
 
-    setChats((prev) => [newChat, ...prev]);
-    setChatSessions((prev) => ({
-      ...prev,
-      [newChatId]: { id: newChatId, messages: [] },
-    }));
-    setCurrentChatId(newChatId);
+  // Load messages whenever current chat changes
+  useEffect(() => {
+    if (!session || !currentChatId) return;
+
+    (async () => {
+      const res = await fetch(`/api/chats/${currentChatId}`);
+      if (!res.ok) return;
+      const data = (await res.json()) as { messages: DbMessage[] };
+      if (currentChatIdRef.current === currentChatId) {
+        setMessages(dbMessagesToUiMessages(data.messages ?? []));
+      }
+    })();
+  }, [session, currentChatId, setMessages]);
+
+  const handleChatSelect = async (chatId: string) => {
+    if (chatId === currentChatId) return;
+    setCurrentChatId(chatId);
     setMessages([]);
   };
 
-  const handleChatSelect = (chatId: string) => {
-    const session = chatSessions[chatId];
-    if (session) {
-      setCurrentChatId(chatId);
-      setMessages(session.messages);
-    }
+  const onNewChatButtonClick = async () => {
+    await handleNewChat();
+    setMessages([]);
   };
 
-  const handleDeleteChat = (chatId: string) => {
-    setChats((prev) => prev.filter((chat) => chat.id !== chatId));
-    setChatSessions((prev) => {
-      const updated = { ...prev };
-      delete updated[chatId];
-      return updated;
-    });
-
-    if (currentChatId === chatId) {
-      const remainingChats = chats.filter((chat) => chat.id !== chatId);
-      if (remainingChats.length > 0) {
-        const nextChat = remainingChats[0];
-        setCurrentChatId(nextChat.id);
-        setMessages(chatSessions[nextChat.id]?.messages || []);
-      } else {
-        setCurrentChatId(null);
-        setMessages([]);
-      }
-    }
-  };
-
-  const handleSendMessage = ({ text }: { text: string }) => {
+  const handleSendMessage = async ({ text }: { text: string }) => {
     if (!text.trim()) return;
 
-    if (!currentChatId) {
-      handleNewChat();
+    let chatId = currentChatId;
+    if (!chatId) {
+      const chat = await handleNewChat();
+      if (!chat) return;
+      chatId = chat.id;
+      currentChatIdRef.current = chatId;
+      setMessages([]);
     }
 
     sendMessage({ text });
-
-    if (currentChatId) {
-      setTimeout(() => {
-        setChatSessions((prev) => ({
-          ...prev,
-          [currentChatId]: {
-            ...prev[currentChatId],
-            messages: [
-              ...(prev[currentChatId]?.messages || []),
-              { role: 'user', content: text },
-            ],
-          },
-        }));
-      }, 0);
-    }
   };
 
-  if (isPending || !session) {
-    return null;
-  }
+  if (isPending || !session) return null;
 
   return (
     <ChatSidebar
       chats={chats}
       currentChatId={currentChatId}
       onChatSelect={handleChatSelect}
-      onNewChat={handleNewChat}
+      onNewChat={onNewChatButtonClick}
       onDeleteChat={handleDeleteChat}
     >
       <div className="relative h-[calc(100vh-3.5rem)] w-full">
         <Conversation className="absolute inset-0 overflow-y-auto">
-          <ConversationContent className="mx-auto max-w-4xl pb-40">
-            {messages.length === 0 ? (
-              <ConversationEmptyState
-                icon={<MessageSquare className="size-12" />}
-                title="Start a conversation"
-                description="Type a message below to begin chatting"
-              />
-            ) : (
-              messages.map((message) => (
-                <Message from={message.role} key={message.id}>
-                  <MessageContent>
-                    {message.parts.map((part: any, i: number) => {
-                      switch (part.type) {
-                        case 'text':
-                          return (
-                            <MessageResponse key={`${message.id}-${i}`}>
-                              {part.text}
-                            </MessageResponse>
-                          );
-                        default:
-                          return null;
-                      }
-                    })}
-                  </MessageContent>
-                </Message>
-              ))
-            )}
-          </ConversationContent>
-          <ConversationScrollButton className="bottom-36" />
+          <ChatMessageList
+            messages={messages}
+            currentChatTitle={currentChatTitle}
+            onRegenerate={regenerate}
+            isLoading={status !== 'ready'}
+          />
+          <ConversationScrollButton className="bottom-44" />
         </Conversation>
-        <div className="pointer-events-none absolute right-0 bottom-0 left-0 px-4 pt-4 pb-8">
-          <div className="bg-background pointer-events-auto mx-auto max-w-4xl rounded-lg">
+
+        <div className="from-background via-background/80 pointer-events-none absolute right-0 bottom-0 left-0 bg-linear-to-t to-transparent px-4 pt-20 pb-8">
+          <div className="bg-background pointer-events-auto mx-auto max-w-4xl">
             <PromptInput onSubmit={handleSendMessage}>
               <PromptInputTextarea placeholder="Say something..." />
               <PromptInputFooter>
@@ -178,6 +142,4 @@ const ConversationDemo = () => {
       </div>
     </ChatSidebar>
   );
-};
-
-export default ConversationDemo;
+}

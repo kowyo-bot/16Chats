@@ -10,6 +10,8 @@
     "lint": "next lint",
     "format": "prettier --write .",
     "db:migrate": "npx @better-auth/cli migrate",
+    "db:migrate:chats": "node scripts/db/migrate-chats.js",
+    "db:migrate:all": "pnpm run db:migrate && pnpm run db:migrate:chats",
     "prepare": "husky"
   },
   "dependencies": {

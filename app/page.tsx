@@ -119,11 +119,11 @@ export default function ConversationDemo() {
             messages={messages}
             currentChatTitle={currentChatTitle}
           />
-          <ConversationScrollButton className="bottom-36" />
+          <ConversationScrollButton className="bottom-44" />
         </Conversation>
 
-        <div className="pointer-events-none absolute right-0 bottom-0 left-0 px-4 pt-4 pb-8">
-          <div className="bg-background pointer-events-auto mx-auto max-w-4xl rounded-lg">
+        <div className="from-background via-background/80 pointer-events-none absolute right-0 bottom-0 left-0 bg-linear-to-t to-transparent px-4 pt-20 pb-8">
+          <div className="bg-background pointer-events-auto mx-auto max-w-4xl">
             <PromptInput onSubmit={handleSendMessage}>
               <PromptInputTextarea placeholder="Say something..." />
               <PromptInputFooter>

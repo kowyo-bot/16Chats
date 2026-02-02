@@ -1,12 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import {
-  MessageSquare,
-  SquarePen,
-  Settings,
-  Trash2,
-} from 'lucide-react';
+import { MessageSquare, SquarePen, Settings, Trash2 } from 'lucide-react';
 
 import {
   Sidebar,
@@ -64,9 +59,9 @@ function ChatSidebarContent({
 
   return (
     <>
-      <SidebarHeader className="h-14 p-0 justify-center">
-        <div className="flex items-center justify-between px-4 h-full group-data-[state=collapsed]:hidden">
-          <h2 className="text-lg font-semibold flex items-center">16Chats</h2>
+      <SidebarHeader className="h-14 justify-center p-0">
+        <div className="flex h-full items-center justify-between px-4 group-data-[state=collapsed]:hidden">
+          <h2 className="flex items-center text-lg font-semibold">16Chats</h2>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -82,7 +77,7 @@ function ChatSidebarContent({
             <TooltipContent>New Chat</TooltipContent>
           </Tooltip>
         </div>
-        <div className="hidden group-data-[state=collapsed]:flex items-center justify-center h-full">
+        <div className="hidden h-full items-center justify-center group-data-[state=collapsed]:flex">
           <span className="text-lg font-bold">16</span>
         </div>
       </SidebarHeader>

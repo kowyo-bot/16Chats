@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import Script from "next/script";
+import Script from 'next/script';
 import './global.css';
 import { ThemeProvider } from '@/components/theme-provider';
 
@@ -16,7 +16,7 @@ export default function RootLayout({
   return (
     <html lang="zh" suppressHydrationWarning>
       <head>
-        {process.env.NODE_ENV === "development" && (
+        {process.env.NODE_ENV === 'development' && (
           <Script
             src="//unpkg.com/react-grab/dist/index.global.js"
             crossOrigin="anonymous"

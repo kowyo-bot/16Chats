@@ -108,7 +108,10 @@ const ConversationDemo = () => {
           ...prev,
           [currentChatId]: {
             ...prev[currentChatId],
-            messages: [...(prev[currentChatId]?.messages || []), { role: 'user', content: text }],
+            messages: [
+              ...(prev[currentChatId]?.messages || []),
+              { role: 'user', content: text },
+            ],
           },
         }));
       }, 0);
@@ -127,9 +130,9 @@ const ConversationDemo = () => {
       onNewChat={handleNewChat}
       onDeleteChat={handleDeleteChat}
     >
-      <div className="relative w-full h-[calc(100vh-3.5rem)]">
+      <div className="relative h-[calc(100vh-3.5rem)] w-full">
         <Conversation className="absolute inset-0 overflow-y-auto">
-          <ConversationContent className="pb-40 max-w-4xl mx-auto">
+          <ConversationContent className="mx-auto max-w-4xl pb-40">
             {messages.length === 0 ? (
               <ConversationEmptyState
                 icon={<MessageSquare className="size-12" />}
@@ -159,8 +162,8 @@ const ConversationDemo = () => {
           </ConversationContent>
           <ConversationScrollButton className="bottom-36" />
         </Conversation>
-        <div className="pointer-events-none absolute bottom-0 left-0 right-0 pt-4 pb-8 px-4">
-          <div className="pointer-events-auto max-w-4xl mx-auto bg-background rounded-lg">
+        <div className="pointer-events-none absolute right-0 bottom-0 left-0 px-4 pt-4 pb-8">
+          <div className="bg-background pointer-events-auto mx-auto max-w-4xl rounded-lg">
             <PromptInput onSubmit={handleSendMessage}>
               <PromptInputTextarea placeholder="Say something..." />
               <PromptInputFooter>

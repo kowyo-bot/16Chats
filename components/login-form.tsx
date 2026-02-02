@@ -1,15 +1,15 @@
-"use client"
+'use client';
 
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import {
   Field,
   FieldDescription,
   FieldGroup,
   FieldSeparator,
-} from "@/components/ui/field"
-import { signIn } from "@/lib/auth-client"
-import { useState } from "react"
+} from '@/components/ui/field';
+import { signIn } from '@/lib/auth-client';
+import { useState } from 'react';
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -31,30 +31,30 @@ function GoogleIcon({ className }: { className?: string }) {
         fill="#EA4335"
       />
     </svg>
-  )
+  );
 }
 
 export function LoginForm({
   className,
   ...props
-}: React.ComponentProps<"div">) {
-  const [isLoading, setIsLoading] = useState(false)
+}: React.ComponentProps<'div'>) {
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleGoogleSignIn = async () => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
       await signIn.social({
-        provider: "google",
-        callbackURL: "/",
-      })
+        provider: 'google',
+        callbackURL: '/',
+      });
     } catch (error) {
-      console.error("Sign in failed:", error)
-      setIsLoading(false)
+      console.error('Sign in failed:', error);
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
+    <div className={cn('flex flex-col gap-6', className)} {...props}>
       <FieldGroup>
         <div className="flex flex-col items-center gap-1 text-center">
           <h1 className="text-2xl font-bold">Welcome to 16Chats</h1>
@@ -72,18 +72,18 @@ export function LoginForm({
             className="w-full"
           >
             {isLoading ? (
-              <div className="size-4 border-2 border-muted-foreground border-t-foreground rounded-full animate-spin" />
+              <div className="border-muted-foreground border-t-foreground size-4 animate-spin rounded-full border-2" />
             ) : (
               <GoogleIcon className="size-4" />
             )}
             Sign in with Google
           </Button>
           <FieldDescription className="text-center">
-            By signing in, you agree to our{" "}
+            By signing in, you agree to our{' '}
             <a href="#" className="underline underline-offset-4">
               Terms
-            </a>{" "}
-            and{" "}
+            </a>{' '}
+            and{' '}
             <a href="#" className="underline underline-offset-4">
               Privacy Policy
             </a>
@@ -91,5 +91,5 @@ export function LoginForm({
         </Field>
       </FieldGroup>
     </div>
-  )
+  );
 }

@@ -161,7 +161,7 @@ export default function ConversationDemo() {
       onDeleteChat={handleDeleteChat}
     >
       <div className="relative h-[calc(100vh-3.5rem)] w-full">
-        <Conversation className="absolute inset-0 overflow-y-auto">
+        <Conversation className="absolute inset-0">
           <ChatMessageList
             messages={messages}
             allMessages={allMessages}

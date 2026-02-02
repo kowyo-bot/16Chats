@@ -19,18 +19,23 @@ import {
 } from '@/components/ai-elements/message';
 import type { UIMessage } from 'ai';
 import { cn } from '@/lib/utils';
+import type { DbMessage } from '@/lib/chat-types';
 
 interface ChatMessageListProps {
   messages: UIMessage[];
+  allMessages?: DbMessage[];
   currentChatTitle?: string;
   onRegenerate?: (options?: { messageId?: string }) => void;
+  onBranchChange?: (messageId: string) => void;
   isLoading?: boolean;
 }
 
 export function ChatMessageList({
   messages,
+  allMessages,
   currentChatTitle,
   onRegenerate,
+  onBranchChange,
   isLoading,
 }: ChatMessageListProps) {
   return (
@@ -49,22 +54,74 @@ export function ChatMessageList({
         messages.map((message, index) => {
           const isLatest = index === messages.length - 1;
 
+          // Find branches for this message
+          // A branch is a message that has the same parent as this one
+          const dbMessage = allMessages?.find((m) => m.id === message.id);
+          const branches = dbMessage?.parentId
+            ? (allMessages?.filter(
+                (m) =>
+                  m.parentId === dbMessage.parentId && m.role === message.role
+              ) ?? [])
+            : [message];
+
+          const currentBranchIndex = branches.findIndex(
+            (b) => b.id === message.id
+          );
+
           return (
             <Message from={message.role} key={message.id}>
-              <MessageBranch>
-                <MessageBranchContent className="pb-1">
-                  <MessageContent key={`${message.id}-content`}>
-                    {message.parts.map((part: any, i: number) => {
-                      if (part.type === 'text') {
-                        return (
-                          <MessageResponse key={`${message.id}-${i}`}>
-                            {part.text}
-                          </MessageResponse>
-                        );
-                      }
-                      return null;
-                    })}
-                  </MessageContent>
+              <MessageBranch
+                defaultBranch={
+                  currentBranchIndex === -1 ? 0 : currentBranchIndex
+                }
+                onBranchChange={(newIndex) => {
+                  const newBranch = branches[newIndex];
+                  if (
+                    newBranch &&
+                    onBranchChange &&
+                    newBranch.id !== message.id
+                  ) {
+                    onBranchChange(newBranch.id);
+                  }
+                }}
+              >
+                <MessageBranchContent>
+                  {branches.length > 1 ? (
+                    branches.map((branch: any) => (
+                      <MessageContent key={branch.id} className="pb-1">
+                        {(
+                          branch.parts || [
+                            { type: 'text', text: branch.content },
+                          ]
+                        ).map((part: any, i: number) => {
+                          if (part.type === 'text') {
+                            return (
+                              <MessageResponse key={`${branch.id}-${i}`}>
+                                {part.text}
+                              </MessageResponse>
+                            );
+                          }
+                          return null;
+                        })}
+                      </MessageContent>
+                    ))
+                  ) : (
+                    <MessageContent
+                      key={`${message.id}-content`}
+                      className="pb-1"
+                    >
+                      {message.parts.map((part: any, i: number) => {
+                        if (part.type === 'text') {
+                          return (
+                            <MessageResponse key={`${message.id}-${i}`}>
+                              {part.text}
+                            </MessageResponse>
+                          );
+                        }
+                        return null;
+                      })}
+                    </MessageContent>
+                  )}
                 </MessageBranchContent>
 
                 <MessageToolbar
@@ -78,7 +135,7 @@ export function ChatMessageList({
                 >
                   {message.role === 'assistant' && (
                     <MessageActions>
-                      {onRegenerate && (
+                      {onRegenerate && isLatest && (
                         <MessageAction
                           onClick={() =>
                             onRegenerate({ messageId: message.id })

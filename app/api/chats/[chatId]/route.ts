@@ -26,7 +26,7 @@ export async function GET(
   }
 
   const { rows } = await pool.query(
-    `select id, role, content, created_at as "createdAt"
+    `select id, role, content, parent_id as "parentId", created_at as "createdAt"
      from chat_messages
      where chat_id = $1
      order by created_at asc`,

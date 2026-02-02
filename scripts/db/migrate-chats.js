@@ -17,6 +17,7 @@ create index if not exists chats_user_id_created_at_idx
 create table if not exists chat_messages (
   id uuid primary key default gen_random_uuid(),
   chat_id uuid not null references chats(id) on delete cascade,
+  parent_id uuid references chat_messages(id) on delete cascade,
   role text not null,
   content text not null,
   created_at timestamptz not null default now()

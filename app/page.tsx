@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Conversation,
@@ -15,112 +15,184 @@ import {
 } from '@/components/ai-elements/message';
 import {
   PromptInput,
-  PromptInputTextarea,
   PromptInputFooter,
   PromptInputSubmit,
+  PromptInputTextarea,
 } from '@/components/ai-elements/prompt-input';
-import { MessageSquare } from 'lucide-react';
-import { useChat } from '@ai-sdk/react';
-import { nanoid } from 'nanoid';
 import { ChatSidebar, type Chat } from '@/components/chat-sidebar';
 import { useSession } from '@/lib/auth-client';
+import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
+import { MessageSquare } from 'lucide-react';
+import type { UIMessage } from 'ai';
 
-interface ChatSession {
+type DbChat = {
   id: string;
-  messages: any[];
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type DbMessage = {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  createdAt: string;
+};
+
+function dbMessagesToUiMessages(rows: DbMessage[]): UIMessage[] {
+  return rows.map((m) => ({
+    id: m.id,
+    role: m.role,
+    parts: [{ type: 'text', text: m.content }],
+  }));
 }
 
-const ConversationDemo = () => {
+export default function ConversationDemo() {
   const router = useRouter();
   const { data: session, isPending } = useSession();
+
   const [chats, setChats] = useState<Chat[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
-  const [chatSessions, setChatSessions] = useState<Record<string, ChatSession>>(
-    {}
+  const [loaded, setLoaded] = useState<Set<string>>(new Set());
+
+  const transport = useMemo(() => {
+    return new DefaultChatTransport({
+      api: '/api/chat',
+      prepareSendMessagesRequest: ({ messages }) => ({
+        body: { messages, chatId: currentChatId },
+      }),
+    });
+  }, [currentChatId]);
+
+  const { messages, sendMessage, status, setMessages } = useChat({ transport });
+
+  const currentChatTitle = useMemo(
+    () => chats.find((c) => c.id === currentChatId)?.title,
+    [chats, currentChatId]
   );
 
-  const { messages, sendMessage, status, setMessages } = useChat();
-
   useEffect(() => {
-    if (!isPending && !session) {
-      router.push('/login');
-    }
+    if (!isPending && !session) router.push('/login');
   }, [session, isPending, router]);
 
-  const handleNewChat = () => {
-    const newChatId = nanoid();
-    const newChat: Chat = {
-      id: newChatId,
-      title: `Chat ${chats.length + 1}`,
-      createdAt: new Date(),
+  useEffect(() => {
+    if (isPending || !session) return;
+
+    (async () => {
+      const res = await fetch('/api/chats');
+      if (!res.ok) return;
+      const data = (await res.json()) as { chats: DbChat[] };
+      const nextChats: Chat[] = (data.chats ?? []).map((c) => ({
+        id: c.id,
+        title: c.title,
+        createdAt: new Date(c.createdAt),
+      }));
+      setChats(nextChats);
+
+      // Auto-select the most recent chat (if any)
+      if (nextChats.length > 0 && !currentChatId) {
+        setCurrentChatId(nextChats[0].id);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, isPending]);
+
+  // Load messages whenever current chat changes
+  useEffect(() => {
+    if (!session || !currentChatId) return;
+
+    if (loaded.has(currentChatId)) return;
+
+    (async () => {
+      const res = await fetch(`/api/chats/${currentChatId}`);
+      if (!res.ok) return;
+      const data = (await res.json()) as { messages: DbMessage[] };
+      setMessages(dbMessagesToUiMessages(data.messages ?? []));
+      setLoaded((prev) => new Set([...prev, currentChatId]));
+    })();
+  }, [session, currentChatId, loaded, setMessages]);
+
+  const handleNewChat = async () => {
+    const res = await fetch('/api/chats', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: `Chat ${chats.length + 1}` }),
+    });
+
+    if (!res.ok) return;
+
+    const data = (await res.json()) as { chat: DbChat };
+    const chat: Chat = {
+      id: data.chat.id,
+      title: data.chat.title,
+      createdAt: new Date(data.chat.createdAt),
     };
 
-    setChats((prev) => [newChat, ...prev]);
-    setChatSessions((prev) => ({
-      ...prev,
-      [newChatId]: { id: newChatId, messages: [] },
-    }));
-    setCurrentChatId(newChatId);
+    setChats((prev) => [chat, ...prev]);
+    setCurrentChatId(chat.id);
+    setLoaded((prev) => {
+      const next = new Set(prev);
+      next.add(chat.id);
+      return next;
+    });
     setMessages([]);
   };
 
-  const handleChatSelect = (chatId: string) => {
-    const session = chatSessions[chatId];
-    if (session) {
-      setCurrentChatId(chatId);
-      setMessages(session.messages);
-    }
+  const handleChatSelect = async (chatId: string) => {
+    setCurrentChatId(chatId);
   };
 
-  const handleDeleteChat = (chatId: string) => {
-    setChats((prev) => prev.filter((chat) => chat.id !== chatId));
-    setChatSessions((prev) => {
-      const updated = { ...prev };
-      delete updated[chatId];
-      return updated;
+  const handleDeleteChat = async (chatId: string) => {
+    await fetch(`/api/chats/${chatId}`, { method: 'DELETE' });
+
+    setChats((prev) => prev.filter((c) => c.id !== chatId));
+    setLoaded((prev) => {
+      const next = new Set(prev);
+      next.delete(chatId);
+      return next;
     });
 
     if (currentChatId === chatId) {
-      const remainingChats = chats.filter((chat) => chat.id !== chatId);
-      if (remainingChats.length > 0) {
-        const nextChat = remainingChats[0];
-        setCurrentChatId(nextChat.id);
-        setMessages(chatSessions[nextChat.id]?.messages || []);
-      } else {
-        setCurrentChatId(null);
-        setMessages([]);
-      }
+      setCurrentChatId(null);
+      setMessages([]);
     }
   };
 
-  const handleSendMessage = ({ text }: { text: string }) => {
+  const handleSendMessage = async ({ text }: { text: string }) => {
     if (!text.trim()) return;
 
-    if (!currentChatId) {
-      handleNewChat();
+    let chatId = currentChatId;
+    if (!chatId) {
+      // Create on-demand
+      const res = await fetch('/api/chats', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ title: `Chat ${chats.length + 1}` }),
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as { chat: DbChat };
+      const chat: Chat = {
+        id: data.chat.id,
+        title: data.chat.title,
+        createdAt: new Date(data.chat.createdAt),
+      };
+      setChats((prev) => [chat, ...prev]);
+      setCurrentChatId(chat.id);
+      setLoaded((prev) => {
+        const next = new Set(prev);
+        next.add(chat.id);
+        return next;
+      });
+      chatId = chat.id;
+      setMessages([]);
     }
 
+    // transport will include { chatId } in the request body
     sendMessage({ text });
-
-    if (currentChatId) {
-      setTimeout(() => {
-        setChatSessions((prev) => ({
-          ...prev,
-          [currentChatId]: {
-            ...prev[currentChatId],
-            messages: [
-              ...(prev[currentChatId]?.messages || []),
-              { role: 'user', content: text },
-            ],
-          },
-        }));
-      }, 0);
-    }
   };
 
-  if (isPending || !session) {
-    return null;
-  }
+  if (isPending || !session) return null;
 
   return (
     <ChatSidebar
@@ -136,7 +208,11 @@ const ConversationDemo = () => {
             {messages.length === 0 ? (
               <ConversationEmptyState
                 icon={<MessageSquare className="size-12" />}
-                title="Start a conversation"
+                title={
+                  currentChatTitle
+                    ? `Start: ${currentChatTitle}`
+                    : 'Start a conversation'
+                }
                 description="Type a message below to begin chatting"
               />
             ) : (
@@ -162,6 +238,7 @@ const ConversationDemo = () => {
           </ConversationContent>
           <ConversationScrollButton className="bottom-36" />
         </Conversation>
+
         <div className="pointer-events-none absolute right-0 bottom-0 left-0 px-4 pt-4 pb-8">
           <div className="bg-background pointer-events-auto mx-auto max-w-4xl rounded-lg">
             <PromptInput onSubmit={handleSendMessage}>
@@ -178,6 +255,4 @@ const ConversationDemo = () => {
       </div>
     </ChatSidebar>
   );
-};
-
-export default ConversationDemo;
+}

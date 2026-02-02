@@ -1,19 +1,20 @@
 import { betterAuth } from "better-auth";
 import { Pool } from "pg";
+import Database from "better-sqlite3";
 
 export const auth = betterAuth({
-  database: process.env.DATABASE_URL
-    ? new Pool({
-        connectionString: process.env.DATABASE_URL,
-        ssl: {
-          rejectUnauthorized: false,
-        },
-      })
-    : {
-        dialect: "sqlite",
-        type: "sqlite",
-        storage: "./sqlite.db",
-      },
+  database:
+    process.env.DATABASE_URL &&
+    (process.env.DATABASE_URL.startsWith("postgres://") ||
+      process.env.DATABASE_URL.startsWith("postgresql://"))
+      ? new Pool({
+          connectionString: process.env.DATABASE_URL,
+          ssl: {
+            rejectUnauthorized: false,
+          },
+        })
+      : new Database("./sqlite.db"),
+  secret: process.env.BETTER_AUTH_SECRET,
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID as string,

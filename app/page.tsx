@@ -45,7 +45,9 @@ export default function ConversationDemo() {
     });
   }, []);
 
-  const { messages, sendMessage, status, setMessages } = useChat({ transport });
+  const { messages, sendMessage, status, setMessages, regenerate } = useChat({
+    transport,
+  });
 
   const currentChatTitle = useMemo(
     () => chats.find((c) => c.id === currentChatId)?.title,
@@ -118,6 +120,8 @@ export default function ConversationDemo() {
           <ChatMessageList
             messages={messages}
             currentChatTitle={currentChatTitle}
+            onRegenerate={regenerate}
+            isLoading={status !== 'ready'}
           />
           <ConversationScrollButton className="bottom-44" />
         </Conversation>

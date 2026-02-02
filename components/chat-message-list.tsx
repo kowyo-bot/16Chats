@@ -62,10 +62,6 @@ export function ChatMessageList({
   onBranchChange,
   isLoading,
 }: ChatMessageListProps) {
-  if (messages.length === 0) {
-    return null;
-  }
-
   return (
     <ConversationContent className="mx-auto max-w-4xl pb-64">
       {messages.map((message, index) => {

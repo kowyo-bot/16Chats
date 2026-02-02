@@ -185,7 +185,7 @@ export default function ConversationDemo() {
       onNewChat={onNewChatButtonClick}
       onDeleteChat={handleDeleteChat}
     >
-      <div className="relative h-[calc(100vh-3.5rem)] w-full">
+      <div className="relative h-[calc(100vh-3.5rem)] w-full overflow-hidden">
         <Conversation className="absolute inset-0">
           <ChatMessageList
             messages={messages}
@@ -195,92 +195,96 @@ export default function ConversationDemo() {
             isLoading={status !== 'ready'}
           />
           <ConversationScrollButton className="bottom-44" />
-        </Conversation>
 
-        <div
-          className={`pointer-events-none absolute right-0 left-0 px-4 transition-all duration-500 ease-out ${
-            messages.length === 0
-              ? 'top-1/2 -translate-y-1/2'
-              : 'from-background via-background/80 top-auto bottom-0 translate-y-0 bg-linear-to-t to-transparent pt-20 pb-8'
-          }`}
-        >
-          <div className="bg-background pointer-events-auto mx-auto max-w-4xl">
-            {messages.length === 0 && (
-              <div className="mb-8 flex flex-col items-center justify-center text-center">
-                <h1
-                  className="text-foreground/90 text-4xl font-normal tracking-tight sm:text-5xl"
-                  style={{
-                    fontFamily:
-                      'Playfair Display, Georgia, Cambria, Times New Roman, Times, serif',
-                  }}
-                >
-                  {session.user.name?.split(' ')[0] || 'Welcome'} returns!
-                </h1>
-              </div>
-            )}
-            <PromptInput onSubmit={handleSendMessage}>
-              <PromptInputTextarea placeholder="Say something..." />
-              <PromptInputFooter>
-                <div className="flex items-center gap-2">
-                  <ModelSelector
-                    open={isSelectorOpen}
-                    onOpenChange={setIsSelectorOpen}
+          <div
+            className={`pointer-events-none absolute right-0 left-0 px-4 transition-all duration-500 ease-out ${
+              messages.length === 0
+                ? 'top-1/2 -translate-y-1/2'
+                : 'from-background via-background/80 top-auto bottom-0 translate-y-0 bg-linear-to-t to-transparent pt-20 pb-8'
+            }`}
+          >
+            <div className="bg-background pointer-events-auto mx-auto max-w-4xl">
+              {messages.length === 0 && (
+                <div className="mb-8 flex flex-col items-center justify-center text-center">
+                  <h1
+                    className="text-foreground/90 text-4xl font-normal tracking-tight sm:text-5xl"
+                    style={{
+                      fontFamily:
+                        'Playfair Display, Georgia, Cambria, Times New Roman, Times, serif',
+                    }}
                   >
-                    <ModelSelectorTrigger asChild>
-                      <Button variant="ghost" size="sm" className="gap-2 px-2">
-                        <div
-                          className="size-2 rounded-full"
-                          style={{ backgroundColor: selectedPersona.color }}
-                        />
-                        <span className="max-w-[100px] truncate text-xs font-medium">
-                          {selectedPersona.name.split(' - ')[0]}
-                        </span>
-                        <ChevronDown className="size-3 opacity-50" />
-                      </Button>
-                    </ModelSelectorTrigger>
-                    <ModelSelectorContent title="Select Persona">
-                      <ModelSelectorInput placeholder="Search personas..." />
-                      <ModelSelectorList>
-                        <ModelSelectorEmpty>
-                          No persona found.
-                        </ModelSelectorEmpty>
-                        <ModelSelectorGroup heading="MBTI Personas">
-                          {personas.map((persona) => (
-                            <ModelSelectorItem
-                              key={persona.id}
-                              value={persona.name}
-                              onSelect={() => {
-                                setSelectedPersonaId(persona.id);
-                                setIsSelectorOpen(false);
-                              }}
-                              className="flex items-center gap-2 px-2 py-3"
-                            >
-                              <div
-                                className="size-3 shrink-0 rounded-full"
-                                style={{ backgroundColor: persona.color }}
-                              />
-                              <div className="flex flex-col gap-0.5">
-                                <ModelSelectorName className="font-medium">
-                                  {persona.name}
-                                </ModelSelectorName>
-                                <span className="text-muted-foreground text-xs">
-                                  {persona.description}
-                                </span>
-                              </div>
-                            </ModelSelectorItem>
-                          ))}
-                        </ModelSelectorGroup>
-                      </ModelSelectorList>
-                    </ModelSelectorContent>
-                  </ModelSelector>
+                    {session.user.name?.split(' ')[0] || 'Welcome'} returns!
+                  </h1>
                 </div>
-                <PromptInputSubmit
-                  status={status === 'streaming' ? 'streaming' : 'ready'}
-                />
-              </PromptInputFooter>
-            </PromptInput>
+              )}
+              <PromptInput onSubmit={handleSendMessage}>
+                <PromptInputTextarea placeholder="Say something..." />
+                <PromptInputFooter>
+                  <div className="flex items-center gap-2">
+                    <ModelSelector
+                      open={isSelectorOpen}
+                      onOpenChange={setIsSelectorOpen}
+                    >
+                      <ModelSelectorTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="gap-2 px-2"
+                        >
+                          <div
+                            className="size-2 rounded-full"
+                            style={{ backgroundColor: selectedPersona.color }}
+                          />
+                          <span className="max-w-[100px] truncate text-xs font-medium">
+                            {selectedPersona.name.split(' - ')[0]}
+                          </span>
+                          <ChevronDown className="size-3 opacity-50" />
+                        </Button>
+                      </ModelSelectorTrigger>
+                      <ModelSelectorContent title="Select Persona">
+                        <ModelSelectorInput placeholder="Search personas..." />
+                        <ModelSelectorList>
+                          <ModelSelectorEmpty>
+                            No persona found.
+                          </ModelSelectorEmpty>
+                          <ModelSelectorGroup heading="MBTI Personas">
+                            {personas.map((persona) => (
+                              <ModelSelectorItem
+                                key={persona.id}
+                                value={persona.name}
+                                onSelect={() => {
+                                  setSelectedPersonaId(persona.id);
+                                  setIsSelectorOpen(false);
+                                }}
+                                className="flex items-center gap-2 px-2 py-3"
+                              >
+                                <div
+                                  className="size-3 shrink-0 rounded-full"
+                                  style={{ backgroundColor: persona.color }}
+                                />
+                                <div className="flex flex-col gap-0.5">
+                                  <ModelSelectorName className="font-medium">
+                                    {persona.name}
+                                  </ModelSelectorName>
+                                  <span className="text-muted-foreground text-xs">
+                                    {persona.description}
+                                  </span>
+                                </div>
+                              </ModelSelectorItem>
+                            ))}
+                          </ModelSelectorGroup>
+                        </ModelSelectorList>
+                      </ModelSelectorContent>
+                    </ModelSelector>
+                  </div>
+                  <PromptInputSubmit
+                    status={status === 'streaming' ? 'streaming' : 'ready'}
+                  />
+                </PromptInputFooter>
+              </PromptInput>
+            </div>
           </div>
-        </div>
+        </Conversation>
       </div>
     </ChatSidebar>
   );

@@ -115,7 +115,6 @@ function ChatSidebarContent({
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <SidebarSeparator />
         {session?.user && <NavUser user={session.user} />}
       </SidebarFooter>
       <SidebarRail />

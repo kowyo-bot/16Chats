@@ -20,7 +20,7 @@ export function ChatMessageList({
   currentChatTitle,
 }: ChatMessageListProps) {
   return (
-    <ConversationContent className="mx-auto max-w-4xl pb-40">
+    <ConversationContent className="mx-auto max-w-4xl pb-64">
       {messages.length === 0 ? (
         <ConversationEmptyState
           icon={<MessageSquare className="size-12" />}

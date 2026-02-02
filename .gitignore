@@ -23,6 +23,7 @@ pnpm-debug.log*
 .claude
 .codex
 .opencode
+.cursor
 /lib/generated/prisma
 
 *.db

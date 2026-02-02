@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Conversation,
@@ -23,6 +23,10 @@ import { dbMessagesToUiMessages, type DbMessage } from '@/lib/chat-types';
 export default function ConversationDemo() {
   const router = useRouter();
   const { data: session, isPending } = useSession();
+  const [allMessages, setAllMessages] = useState<DbMessage[]>([]);
+  const [selectedBranchIds, setSelectedBranchIds] = useState<
+    Record<string, string>
+  >({});
 
   const {
     chats,
@@ -36,17 +40,35 @@ export default function ConversationDemo() {
   const currentChatIdRef = useRef<string | null>(null);
   currentChatIdRef.current = currentChatId;
 
+  // Track the parent message ID for new messages (last message in current branch)
+  const parentMessageIdRef = useRef<string | null>(null);
+
   const transport = useMemo(() => {
     return new DefaultChatTransport({
       api: '/api/chat',
       prepareSendMessagesRequest: ({ messages }) => ({
-        body: { messages, chatId: currentChatIdRef.current },
+        body: {
+          messages,
+          chatId: currentChatIdRef.current,
+          parentMessageId: parentMessageIdRef.current,
+        },
       }),
     });
   }, []);
 
   const { messages, sendMessage, status, setMessages, regenerate } = useChat({
     transport,
+    onFinish: async () => {
+      // Refresh messages after a response is finished to get the branching info from DB
+      if (!currentChatId) return;
+      const res = await fetch(`/api/chats/${currentChatId}`);
+      if (!res.ok) return;
+      const data = (await res.json()) as { messages: DbMessage[] };
+      const dbMsgs = data.messages ?? [];
+      setAllMessages(dbMsgs);
+      // Sync useChat messages with DB messages to ensure IDs match for branching
+      setMessages(dbMessagesToUiMessages(dbMsgs, selectedBranchIds));
+    },
   });
 
   const currentChatTitle = useMemo(
@@ -74,20 +96,39 @@ export default function ConversationDemo() {
       if (!res.ok) return;
       const data = (await res.json()) as { messages: DbMessage[] };
       if (currentChatIdRef.current === currentChatId) {
+        setAllMessages(data.messages ?? []);
         setMessages(dbMessagesToUiMessages(data.messages ?? []));
       }
     })();
   }, [session, currentChatId, setMessages]);
 
+  const handleBranchChange = (messageId: string) => {
+    const message = allMessages.find((m) => m.id === messageId);
+    const parentId = message?.parentId || 'root';
+
+    const newSelected = {
+      ...selectedBranchIds,
+      [parentId]: messageId,
+    };
+    setSelectedBranchIds(newSelected);
+    setMessages(dbMessagesToUiMessages(allMessages, newSelected));
+  };
+
+  const resetMessageState = () => {
+    setMessages([]);
+    setAllMessages([]);
+    setSelectedBranchIds({});
+  };
+
   const handleChatSelect = async (chatId: string) => {
     if (chatId === currentChatId) return;
     setCurrentChatId(chatId);
-    setMessages([]);
+    resetMessageState();
   };
 
   const onNewChatButtonClick = async () => {
     await handleNewChat();
-    setMessages([]);
+    resetMessageState();
   };
 
   const handleSendMessage = async ({ text }: { text: string }) => {
@@ -99,8 +140,12 @@ export default function ConversationDemo() {
       if (!chat) return;
       chatId = chat.id;
       currentChatIdRef.current = chatId;
-      setMessages([]);
+      resetMessageState();
     }
+
+    // Set the parent to the last message in the current branch before sending
+    parentMessageIdRef.current =
+      messages.length > 0 ? messages[messages.length - 1].id : null;
 
     sendMessage({ text });
   };
@@ -116,11 +161,13 @@ export default function ConversationDemo() {
       onDeleteChat={handleDeleteChat}
     >
       <div className="relative h-[calc(100vh-3.5rem)] w-full">
-        <Conversation className="absolute inset-0 overflow-y-auto">
+        <Conversation className="absolute inset-0">
           <ChatMessageList
             messages={messages}
+            allMessages={allMessages}
             currentChatTitle={currentChatTitle}
             onRegenerate={regenerate}
+            onBranchChange={handleBranchChange}
             isLoading={status !== 'ready'}
           />
           <ConversationScrollButton className="bottom-44" />

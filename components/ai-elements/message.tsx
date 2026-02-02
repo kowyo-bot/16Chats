@@ -312,6 +312,14 @@ export const MessageResponse = memo(
         className
       )}
       plugins={{ code, mermaid, math, cjk }}
+      components={{
+        p: ({ node, ...props }: any) => (
+          <div
+            className={cn("mb-4 last:mb-0", props.className)}
+            {...props}
+          />
+        ),
+      }}
       {...props}
     />
   ),

@@ -6,6 +6,7 @@ import {
 } from 'ai';
 import { auth } from '@/lib/auth';
 import { getDbPool } from '@/lib/db';
+import { personas } from '@/lib/personas';
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -35,8 +36,15 @@ export async function POST(req: Request) {
     messages,
     chatId,
     parentMessageId,
-  }: { messages: UIMessage[]; chatId?: string; parentMessageId?: string } =
-    await req.json();
+    personaId,
+  }: {
+    messages: UIMessage[];
+    chatId?: string;
+    parentMessageId?: string;
+    personaId?: string;
+  } = await req.json();
+
+  const persona = personas.find((p) => p.id === personaId) || personas[0];
 
   let lastMessageId: string | null = null;
 
@@ -132,6 +140,7 @@ export async function POST(req: Request) {
 
   const result = streamText({
     model: 'anthropic/claude-haiku-4.5',
+    system: persona.systemPrompt,
     messages: await convertToModelMessages(messages),
     onFinish: async ({ text }) => {
       if (!chatId) return;

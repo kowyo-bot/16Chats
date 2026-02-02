@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Conversation,
@@ -54,16 +54,17 @@ export default function ConversationDemo() {
 
   const [chats, setChats] = useState<Chat[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
-  const [loaded, setLoaded] = useState<Set<string>>(new Set());
+  const currentChatIdRef = useRef<string | null>(null);
+  currentChatIdRef.current = currentChatId;
 
   const transport = useMemo(() => {
     return new DefaultChatTransport({
       api: '/api/chat',
       prepareSendMessagesRequest: ({ messages }) => ({
-        body: { messages, chatId: currentChatId },
+        body: { messages, chatId: currentChatIdRef.current },
       }),
     });
-  }, [currentChatId]);
+  }, []);
 
   const { messages, sendMessage, status, setMessages } = useChat({ transport });
 
@@ -102,16 +103,15 @@ export default function ConversationDemo() {
   useEffect(() => {
     if (!session || !currentChatId) return;
 
-    if (loaded.has(currentChatId)) return;
-
     (async () => {
       const res = await fetch(`/api/chats/${currentChatId}`);
       if (!res.ok) return;
       const data = (await res.json()) as { messages: DbMessage[] };
-      setMessages(dbMessagesToUiMessages(data.messages ?? []));
-      setLoaded((prev) => new Set([...prev, currentChatId]));
+      if (currentChatIdRef.current === currentChatId) {
+        setMessages(dbMessagesToUiMessages(data.messages ?? []));
+      }
     })();
-  }, [session, currentChatId, loaded, setMessages]);
+  }, [session, currentChatId, setMessages]);
 
   const handleNewChat = async () => {
     const res = await fetch('/api/chats', {
@@ -131,27 +131,19 @@ export default function ConversationDemo() {
 
     setChats((prev) => [chat, ...prev]);
     setCurrentChatId(chat.id);
-    setLoaded((prev) => {
-      const next = new Set(prev);
-      next.add(chat.id);
-      return next;
-    });
     setMessages([]);
   };
 
   const handleChatSelect = async (chatId: string) => {
+    if (chatId === currentChatId) return;
     setCurrentChatId(chatId);
+    setMessages([]);
   };
 
   const handleDeleteChat = async (chatId: string) => {
     await fetch(`/api/chats/${chatId}`, { method: 'DELETE' });
 
     setChats((prev) => prev.filter((c) => c.id !== chatId));
-    setLoaded((prev) => {
-      const next = new Set(prev);
-      next.delete(chatId);
-      return next;
-    });
 
     if (currentChatId === chatId) {
       setCurrentChatId(null);
@@ -178,13 +170,9 @@ export default function ConversationDemo() {
         createdAt: new Date(data.chat.createdAt),
       };
       setChats((prev) => [chat, ...prev]);
-      setCurrentChatId(chat.id);
-      setLoaded((prev) => {
-        const next = new Set(prev);
-        next.add(chat.id);
-        return next;
-      });
       chatId = chat.id;
+      currentChatIdRef.current = chatId;
+      setCurrentChatId(chatId);
       setMessages([]);
     }
 

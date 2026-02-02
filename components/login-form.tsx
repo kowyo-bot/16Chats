@@ -2,12 +2,7 @@
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldSeparator,
-} from '@/components/ui/field';
+import { Field, FieldGroup } from '@/components/ui/field';
 import { signIn } from '@/lib/auth-client';
 import { useState } from 'react';
 
@@ -54,40 +49,37 @@ export function LoginForm({
   };
 
   return (
-    <div className={cn('flex flex-col gap-6', className)} {...props}>
-      <FieldGroup>
-        <div className="flex flex-col items-center gap-1 text-center">
-          <h1 className="text-2xl font-bold">Welcome to 16Chats</h1>
-          <p className="text-muted-foreground text-sm text-balance">
-            Sign in to start chatting with 16 unique personas
-          </p>
+    <div className={cn('flex flex-col gap-10', className)} {...props}>
+      <FieldGroup className="gap-8">
+        <div className="flex flex-col items-center text-center">
+          <h1
+            className="text-7xl leading-none font-black tracking-tighter sm:text-8xl"
+            style={{
+              fontFamily:
+                'Playfair Display, Georgia, Cambria, Times New Roman, Times, serif',
+            }}
+          >
+            16
+            <span className="mt-2 block text-5xl font-light tracking-[0.2em] uppercase sm:text-6xl">
+              Chats
+            </span>
+          </h1>
         </div>
-        <FieldSeparator>Continue with</FieldSeparator>
         <Field>
           <Button
             variant="outline"
             type="button"
             onClick={handleGoogleSignIn}
             disabled={isLoading}
-            className="w-full"
+            className="h-12 w-full text-base font-medium tracking-wide"
           >
             {isLoading ? (
               <div className="border-muted-foreground border-t-foreground size-4 animate-spin rounded-full border-2" />
             ) : (
-              <GoogleIcon className="size-4" />
+              <GoogleIcon className="size-5" />
             )}
             Sign in with Google
           </Button>
-          <FieldDescription className="text-center">
-            By signing in, you agree to our{' '}
-            <a href="#" className="underline underline-offset-4">
-              Terms
-            </a>{' '}
-            and{' '}
-            <a href="#" className="underline underline-offset-4">
-              Privacy Policy
-            </a>
-          </FieldDescription>
         </Field>
       </FieldGroup>
     </div>

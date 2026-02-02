@@ -3,7 +3,7 @@
 import * as React from 'react';
 import {
   MessageSquare,
-  Plus,
+  SquarePen,
   Settings,
   Trash2,
 } from 'lucide-react';
@@ -64,9 +64,9 @@ function ChatSidebarContent({
 
   return (
     <>
-      <SidebarHeader>
-        <div className="flex items-center justify-between p-2 group-data-[state=collapsed]:hidden">
-          <h2 className="text-lg font-semibold">16Chats</h2>
+      <SidebarHeader className="h-14 p-0 justify-center">
+        <div className="flex items-center justify-between px-4 h-full group-data-[state=collapsed]:hidden">
+          <h2 className="text-lg font-semibold flex items-center">16Chats</h2>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -75,14 +75,14 @@ function ChatSidebarContent({
                 className="size-8"
                 onClick={onNewChat}
               >
-                <Plus className="size-4" />
+                <SquarePen className="size-4" />
                 <span className="sr-only">New Chat</span>
               </Button>
             </TooltipTrigger>
             <TooltipContent>New Chat</TooltipContent>
           </Tooltip>
         </div>
-        <div className="hidden group-data-[state=collapsed]:flex items-center justify-center p-2">
+        <div className="hidden group-data-[state=collapsed]:flex items-center justify-center h-full">
           <span className="text-lg font-bold">16</span>
         </div>
       </SidebarHeader>
@@ -91,31 +91,25 @@ function ChatSidebarContent({
           <SidebarGroupLabel>Recent Chats</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {chats.length === 0 ? (
-                <div className="px-2 py-4 text-sm text-muted-foreground text-center">
-                  No chats yet. Start a new conversation!
-                </div>
-              ) : (
-                chats.map((chat) => (
-                  <SidebarMenuItem key={chat.id}>
-                    <SidebarMenuButton
-                      isActive={currentChatId === chat.id}
-                      onClick={() => onChatSelect(chat.id)}
-                      tooltip={chat.title}
-                    >
-                      <MessageSquare className="size-4" />
-                      <span className="truncate">{chat.title}</span>
-                    </SidebarMenuButton>
-                    <SidebarMenuAction
-                      showOnHover
-                      onClick={() => onDeleteChat(chat.id)}
-                    >
-                      <Trash2 className="size-4" />
-                      <span className="sr-only">Delete chat</span>
-                    </SidebarMenuAction>
-                  </SidebarMenuItem>
-                ))
-              )}
+              {chats.map((chat) => (
+                <SidebarMenuItem key={chat.id}>
+                  <SidebarMenuButton
+                    isActive={currentChatId === chat.id}
+                    onClick={() => onChatSelect(chat.id)}
+                    tooltip={chat.title}
+                  >
+                    <MessageSquare className="size-4" />
+                    <span className="truncate">{chat.title}</span>
+                  </SidebarMenuButton>
+                  <SidebarMenuAction
+                    showOnHover
+                    onClick={() => onDeleteChat(chat.id)}
+                  >
+                    <Trash2 className="size-4" />
+                    <span className="sr-only">Delete chat</span>
+                  </SidebarMenuAction>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

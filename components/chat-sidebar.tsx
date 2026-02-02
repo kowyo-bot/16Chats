@@ -144,7 +144,7 @@ export function ChatSidebar({
       </Sidebar>
       <SidebarInset>
         <div className="flex h-full flex-col">
-          <header className="flex h-14 items-center gap-2 border-b px-4">
+          <header className="flex h-14 items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
           </header>
           {children}

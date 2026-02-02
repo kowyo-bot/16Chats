@@ -201,7 +201,7 @@ export default function ConversationDemo() {
           className={`pointer-events-none absolute right-0 left-0 px-4 transition-all duration-500 ease-out ${
             messages.length === 0
               ? 'top-1/2 -translate-y-1/2'
-              : 'from-background via-background/80 bottom-0 bg-linear-to-t to-transparent pt-20 pb-8'
+              : 'from-background via-background/80 top-auto bottom-0 translate-y-0 bg-linear-to-t to-transparent pt-20 pb-8'
           }`}
         >
           <div className="bg-background pointer-events-auto mx-auto max-w-4xl">

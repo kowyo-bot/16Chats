@@ -1,8 +1,5 @@
-import { MessageSquare, RefreshCcwIcon, CopyIcon } from 'lucide-react';
-import {
-  ConversationEmptyState,
-  ConversationContent,
-} from '@/components/ai-elements/conversation';
+import { RefreshCcwIcon, CopyIcon } from 'lucide-react';
+import { ConversationContent } from '@/components/ai-elements/conversation';
 import {
   Message,
   MessageContent,
@@ -53,7 +50,6 @@ function getToolbarClassName(isLatest: boolean, isLoading: boolean): string {
 interface ChatMessageListProps {
   messages: UIMessage[];
   allMessages?: DbMessage[];
-  currentChatTitle?: string;
   onRegenerate?: (options?: { messageId?: string }) => void;
   onBranchChange?: (messageId: string) => void;
   isLoading?: boolean;
@@ -62,142 +58,129 @@ interface ChatMessageListProps {
 export function ChatMessageList({
   messages,
   allMessages,
-  currentChatTitle,
   onRegenerate,
   onBranchChange,
   isLoading,
 }: ChatMessageListProps) {
+  if (messages.length === 0) {
+    return null;
+  }
+
   return (
     <ConversationContent className="mx-auto max-w-4xl pb-64">
-      {messages.length === 0 ? (
-        <ConversationEmptyState
-          icon={<MessageSquare className="size-12" />}
-          title={
-            currentChatTitle
-              ? `Start: ${currentChatTitle}`
-              : 'Start a conversation'
-          }
-          description="Type a message below to begin chatting"
-        />
-      ) : (
-        messages.map((message, index) => {
-          const isLatest = index === messages.length - 1;
+      {messages.map((message, index) => {
+        const isLatest = index === messages.length - 1;
 
-          // Find branches for this message
-          // A branch is a message that has the same parent as this one
-          const dbMessage = allMessages?.find((m) => m.id === message.id);
-          const branches = dbMessage?.parentId
-            ? (allMessages?.filter(
-                (m) =>
-                  m.parentId === dbMessage.parentId && m.role === message.role
-              ) ?? [])
-            : [message];
+        // Find branches for this message
+        // A branch is a message that has the same parent as this one
+        const dbMessage = allMessages?.find((m) => m.id === message.id);
+        const branches = dbMessage?.parentId
+          ? (allMessages?.filter(
+              (m) =>
+                m.parentId === dbMessage.parentId && m.role === message.role
+            ) ?? [])
+          : [message];
 
-          const currentBranchIndex = branches.findIndex(
-            (b) => b.id === message.id
-          );
+        const currentBranchIndex = branches.findIndex(
+          (b) => b.id === message.id
+        );
 
-          return (
-            <Message from={message.role} key={message.id}>
-              <MessageBranch
-                defaultBranch={
-                  currentBranchIndex === -1 ? 0 : currentBranchIndex
+        return (
+          <Message from={message.role} key={message.id}>
+            <MessageBranch
+              defaultBranch={currentBranchIndex === -1 ? 0 : currentBranchIndex}
+              onBranchChange={(newIndex) => {
+                const newBranch = branches[newIndex];
+                if (
+                  newBranch &&
+                  onBranchChange &&
+                  newBranch.id !== message.id
+                ) {
+                  onBranchChange(newBranch.id);
                 }
-                onBranchChange={(newIndex) => {
-                  const newBranch = branches[newIndex];
-                  if (
-                    newBranch &&
-                    onBranchChange &&
-                    newBranch.id !== message.id
-                  ) {
-                    onBranchChange(newBranch.id);
-                  }
-                }}
+              }}
+            >
+              <MessageBranchContent>
+                {branches.length > 1 ? (
+                  branches.map((branch: any) => {
+                    const parts: MessagePart[] = branch.parts || [
+                      { type: 'text', text: branch.content },
+                    ];
+                    return (
+                      <MessageContent key={branch.id} className="pb-1">
+                        {renderMessageParts(parts, branch.id)}
+                      </MessageContent>
+                    );
+                  })
+                ) : (
+                  <MessageContent
+                    key={`${message.id}-content`}
+                    className="pb-1"
+                  >
+                    {renderMessageParts(
+                      message.parts as MessagePart[],
+                      message.id
+                    )}
+                  </MessageContent>
+                )}
+              </MessageBranchContent>
+
+              <MessageToolbar
+                className={getToolbarClassName(isLatest, isLoading ?? false)}
               >
-                <MessageBranchContent>
-                  {branches.length > 1 ? (
-                    branches.map((branch: any) => {
-                      const parts: MessagePart[] = branch.parts || [
-                        { type: 'text', text: branch.content },
-                      ];
-                      return (
-                        <MessageContent key={branch.id} className="pb-1">
-                          {renderMessageParts(parts, branch.id)}
-                        </MessageContent>
-                      );
-                    })
-                  ) : (
-                    <MessageContent
-                      key={`${message.id}-content`}
-                      className="pb-1"
+                {message.role === 'assistant' && (
+                  <MessageActions>
+                    {onRegenerate && isLatest && (
+                      <MessageAction
+                        onClick={() => onRegenerate({ messageId: message.id })}
+                        label="Retry"
+                        tooltip="Regenerate response"
+                      >
+                        <RefreshCcwIcon className="size-3" />
+                      </MessageAction>
+                    )}
+                    <MessageAction
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          getMessageText(message.parts as MessagePart[])
+                        )
+                      }
+                      label="Copy"
+                      tooltip="Copy message"
                     >
-                      {renderMessageParts(
-                        message.parts as MessagePart[],
-                        message.id
-                      )}
-                    </MessageContent>
-                  )}
-                </MessageBranchContent>
+                      <CopyIcon className="size-3" />
+                    </MessageAction>
+                  </MessageActions>
+                )}
 
-                <MessageToolbar
-                  className={getToolbarClassName(isLatest, isLoading ?? false)}
-                >
-                  {message.role === 'assistant' && (
-                    <MessageActions>
-                      {onRegenerate && isLatest && (
-                        <MessageAction
-                          onClick={() =>
-                            onRegenerate({ messageId: message.id })
-                          }
-                          label="Retry"
-                          tooltip="Regenerate response"
-                        >
-                          <RefreshCcwIcon className="size-3" />
-                        </MessageAction>
-                      )}
-                      <MessageAction
-                        onClick={() =>
-                          navigator.clipboard.writeText(
-                            getMessageText(message.parts as MessagePart[])
-                          )
-                        }
-                        label="Copy"
-                        tooltip="Copy message"
-                      >
-                        <CopyIcon className="size-3" />
-                      </MessageAction>
-                    </MessageActions>
-                  )}
+                <MessageBranchSelector from={message.role}>
+                  <MessageBranchPrevious />
+                  <MessageBranchPage />
+                  <MessageBranchNext />
+                </MessageBranchSelector>
 
-                  <MessageBranchSelector from={message.role}>
-                    <MessageBranchPrevious />
-                    <MessageBranchPage />
-                    <MessageBranchNext />
-                  </MessageBranchSelector>
+                <div className="flex-1" />
 
-                  <div className="flex-1" />
-
-                  {message.role === 'user' && (
-                    <MessageActions>
-                      <MessageAction
-                        onClick={() =>
-                          navigator.clipboard.writeText(
-                            getMessageText(message.parts as MessagePart[])
-                          )
-                        }
-                        label="Copy"
-                        tooltip="Copy message"
-                      >
-                        <CopyIcon className="size-3" />
-                      </MessageAction>
-                    </MessageActions>
-                  )}
-                </MessageToolbar>
-              </MessageBranch>
-            </Message>
-          );
-        })
-      )}
+                {message.role === 'user' && (
+                  <MessageActions>
+                    <MessageAction
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          getMessageText(message.parts as MessagePart[])
+                        )
+                      }
+                      label="Copy"
+                      tooltip="Copy message"
+                    >
+                      <CopyIcon className="size-3" />
+                    </MessageAction>
+                  </MessageActions>
+                )}
+              </MessageToolbar>
+            </MessageBranch>
+          </Message>
+        );
+      })}
     </ConversationContent>
   );
 }

@@ -96,11 +96,6 @@ export default function ConversationDemo() {
     },
   });
 
-  const currentChatTitle = useMemo(
-    () => chats.find((c) => c.id === currentChatId)?.title,
-    [chats, currentChatId]
-  );
-
   const selectedPersona = useMemo(
     () => personas.find((p) => p.id === selectedPersonaId) || personas[0],
     [selectedPersonaId]
@@ -195,7 +190,6 @@ export default function ConversationDemo() {
           <ChatMessageList
             messages={messages}
             allMessages={allMessages}
-            currentChatTitle={currentChatTitle}
             onRegenerate={regenerate}
             onBranchChange={handleBranchChange}
             isLoading={status !== 'ready'}
@@ -203,8 +197,27 @@ export default function ConversationDemo() {
           <ConversationScrollButton className="bottom-44" />
         </Conversation>
 
-        <div className="from-background via-background/80 pointer-events-none absolute right-0 bottom-0 left-0 bg-linear-to-t to-transparent px-4 pt-20 pb-8">
+        <div
+          className={`pointer-events-none absolute right-0 left-0 px-4 transition-all duration-500 ease-out ${
+            messages.length === 0
+              ? 'top-1/2 -translate-y-1/2'
+              : 'from-background via-background/80 bottom-0 bg-linear-to-t to-transparent pt-20 pb-8'
+          }`}
+        >
           <div className="bg-background pointer-events-auto mx-auto max-w-4xl">
+            {messages.length === 0 && (
+              <div className="mb-8 flex flex-col items-center justify-center text-center">
+                <h1
+                  className="text-foreground/90 text-4xl font-normal tracking-tight sm:text-5xl"
+                  style={{
+                    fontFamily:
+                      'Playfair Display, Georgia, Cambria, Times New Roman, Times, serif',
+                  }}
+                >
+                  {session.user.name?.split(' ')[0] || 'Welcome'} returns!
+                </h1>
+              </div>
+            )}
             <PromptInput onSubmit={handleSendMessage}>
               <PromptInputTextarea placeholder="Say something..." />
               <PromptInputFooter>

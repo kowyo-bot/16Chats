@@ -1,0 +1,9 @@
+components/ui
+.vscode/
+pnpm-lock.yaml
+.github/
+.vercel/
+.env*
+.next/
+out/
+node_modules/

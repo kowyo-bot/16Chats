@@ -205,7 +205,9 @@ export function highlightCode(
 
       const tokenized: TokenizedCode = {
         tokens: result.tokens,
+        // @ts-ignore - tolerate possibly-undefined colors from shiki token output
         fg: result.fg,
+        // @ts-ignore - tolerate possibly-undefined colors from shiki token output
         bg: result.bg,
       };
 

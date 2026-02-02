@@ -40,11 +40,18 @@ export default function ConversationDemo() {
   const currentChatIdRef = useRef<string | null>(null);
   currentChatIdRef.current = currentChatId;
 
+  // Track the parent message ID for new messages (last message in current branch)
+  const parentMessageIdRef = useRef<string | null>(null);
+
   const transport = useMemo(() => {
     return new DefaultChatTransport({
       api: '/api/chat',
       prepareSendMessagesRequest: ({ messages }) => ({
-        body: { messages, chatId: currentChatIdRef.current },
+        body: {
+          messages,
+          chatId: currentChatIdRef.current,
+          parentMessageId: parentMessageIdRef.current,
+        },
       }),
     });
   }, []);
@@ -107,19 +114,21 @@ export default function ConversationDemo() {
     setMessages(dbMessagesToUiMessages(allMessages, newSelected));
   };
 
-  const handleChatSelect = async (chatId: string) => {
-    if (chatId === currentChatId) return;
-    setCurrentChatId(chatId);
+  const resetMessageState = () => {
     setMessages([]);
     setAllMessages([]);
     setSelectedBranchIds({});
   };
 
+  const handleChatSelect = async (chatId: string) => {
+    if (chatId === currentChatId) return;
+    setCurrentChatId(chatId);
+    resetMessageState();
+  };
+
   const onNewChatButtonClick = async () => {
     await handleNewChat();
-    setMessages([]);
-    setAllMessages([]);
-    setSelectedBranchIds({});
+    resetMessageState();
   };
 
   const handleSendMessage = async ({ text }: { text: string }) => {
@@ -131,10 +140,12 @@ export default function ConversationDemo() {
       if (!chat) return;
       chatId = chat.id;
       currentChatIdRef.current = chatId;
-      setMessages([]);
-      setAllMessages([]);
-      setSelectedBranchIds({});
+      resetMessageState();
     }
+
+    // Set the parent to the last message in the current branch before sending
+    parentMessageIdRef.current =
+      messages.length > 0 ? messages[messages.length - 1].id : null;
 
     sendMessage({ text });
   };

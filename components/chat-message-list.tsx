@@ -18,8 +18,37 @@ import {
   MessageToolbar,
 } from '@/components/ai-elements/message';
 import type { UIMessage } from 'ai';
-import { cn } from '@/lib/utils';
 import type { DbMessage } from '@/lib/chat-types';
+
+type MessagePart = { type: string; text?: string };
+
+function getMessageText(parts: MessagePart[]): string {
+  return parts
+    .filter((p) => p.type === 'text')
+    .map((p) => p.text ?? '')
+    .join('');
+}
+
+function renderMessageParts(
+  parts: MessagePart[],
+  keyPrefix: string
+): React.ReactNode[] {
+  return parts
+    .filter((p) => p.type === 'text')
+    .map((part, i) => (
+      <MessageResponse key={`${keyPrefix}-${i}`}>{part.text}</MessageResponse>
+    ));
+}
+
+function getToolbarClassName(isLatest: boolean, isLoading: boolean): string {
+  if (isLatest && isLoading) {
+    return 'mt-0 hidden';
+  }
+  if (!isLatest) {
+    return 'mt-0 opacity-0 transition-opacity group-hover:opacity-100';
+  }
+  return 'mt-0';
+}
 
 interface ChatMessageListProps {
   messages: UIMessage[];
@@ -87,51 +116,31 @@ export function ChatMessageList({
               >
                 <MessageBranchContent>
                   {branches.length > 1 ? (
-                    branches.map((branch: any) => (
-                      <MessageContent key={branch.id} className="pb-1">
-                        {(
-                          branch.parts || [
-                            { type: 'text', text: branch.content },
-                          ]
-                        ).map((part: any, i: number) => {
-                          if (part.type === 'text') {
-                            return (
-                              <MessageResponse key={`${branch.id}-${i}`}>
-                                {part.text}
-                              </MessageResponse>
-                            );
-                          }
-                          return null;
-                        })}
-                      </MessageContent>
-                    ))
+                    branches.map((branch: any) => {
+                      const parts: MessagePart[] = branch.parts || [
+                        { type: 'text', text: branch.content },
+                      ];
+                      return (
+                        <MessageContent key={branch.id} className="pb-1">
+                          {renderMessageParts(parts, branch.id)}
+                        </MessageContent>
+                      );
+                    })
                   ) : (
                     <MessageContent
                       key={`${message.id}-content`}
                       className="pb-1"
                     >
-                      {message.parts.map((part: any, i: number) => {
-                        if (part.type === 'text') {
-                          return (
-                            <MessageResponse key={`${message.id}-${i}`}>
-                              {part.text}
-                            </MessageResponse>
-                          );
-                        }
-                        return null;
-                      })}
+                      {renderMessageParts(
+                        message.parts as MessagePart[],
+                        message.id
+                      )}
                     </MessageContent>
                   )}
                 </MessageBranchContent>
 
                 <MessageToolbar
-                  className={cn(
-                    'mt-0',
-                    isLatest && isLoading
-                      ? 'hidden'
-                      : !isLatest &&
-                          'opacity-0 transition-opacity group-hover:opacity-100'
-                  )}
+                  className={getToolbarClassName(isLatest, isLoading ?? false)}
                 >
                   {message.role === 'assistant' && (
                     <MessageActions>
@@ -147,13 +156,11 @@ export function ChatMessageList({
                         </MessageAction>
                       )}
                       <MessageAction
-                        onClick={() => {
-                          const text = message.parts
-                            .filter((p: any) => p.type === 'text')
-                            .map((p: any) => p.text)
-                            .join('');
-                          navigator.clipboard.writeText(text);
-                        }}
+                        onClick={() =>
+                          navigator.clipboard.writeText(
+                            getMessageText(message.parts as MessagePart[])
+                          )
+                        }
                         label="Copy"
                         tooltip="Copy message"
                       >
@@ -173,13 +180,11 @@ export function ChatMessageList({
                   {message.role === 'user' && (
                     <MessageActions>
                       <MessageAction
-                        onClick={() => {
-                          const text = message.parts
-                            .filter((p: any) => p.type === 'text')
-                            .map((p: any) => p.text)
-                            .join('');
-                          navigator.clipboard.writeText(text);
-                        }}
+                        onClick={() =>
+                          navigator.clipboard.writeText(
+                            getMessageText(message.parts as MessagePart[])
+                          )
+                        }
                         label="Copy"
                         tooltip="Copy message"
                       >

@@ -19,21 +19,6 @@ import { DefaultChatTransport } from 'ai';
 import { useChats } from '@/hooks/use-chats';
 import { ChatMessageList } from '@/components/chat-message-list';
 import { dbMessagesToUiMessages, type DbMessage } from '@/lib/chat-types';
-import { personas } from '@/lib/personas';
-import {
-  ModelSelector,
-  ModelSelectorContent,
-  ModelSelectorEmpty,
-  ModelSelectorGroup,
-  ModelSelectorInput,
-  ModelSelectorItem,
-  ModelSelectorList,
-  ModelSelectorTrigger,
-  ModelSelectorName,
-  ModelSelectorLogo,
-} from '@/components/ai-elements/model-selector';
-import { Button } from '@/components/ui/button';
-import { ChevronDown } from 'lucide-react';
 
 export default function ConversationDemo() {
   const router = useRouter();
@@ -42,16 +27,6 @@ export default function ConversationDemo() {
   const [selectedBranchIds, setSelectedBranchIds] = useState<
     Record<string, string>
   >({});
-  const [selectedPersonaId, setSelectedPersonaId] = useState<string>(
-    personas[0].id
-  );
-  const selectedPersonaIdRef = useRef(selectedPersonaId);
-  useEffect(() => {
-    selectedPersonaIdRef.current = selectedPersonaId;
-  }, [selectedPersonaId]);
-
-  const [isSelectorOpen, setIsSelectorOpen] = useState(false);
-
   const {
     chats,
     currentChatId,
@@ -75,7 +50,6 @@ export default function ConversationDemo() {
           messages,
           chatId: currentChatIdRef.current,
           parentMessageId: parentMessageIdRef.current,
-          personaId: selectedPersonaIdRef.current,
         },
       }),
     });
@@ -95,11 +69,6 @@ export default function ConversationDemo() {
       setMessages(dbMessagesToUiMessages(dbMsgs, selectedBranchIds));
     },
   });
-
-  const selectedPersona = useMemo(
-    () => personas.find((p) => p.id === selectedPersonaId) || personas[0],
-    [selectedPersonaId]
-  );
 
   useEffect(() => {
     if (!isPending && !session) router.push('/login');
@@ -220,63 +189,6 @@ export default function ConversationDemo() {
               <PromptInput onSubmit={handleSendMessage}>
                 <PromptInputTextarea placeholder="Say something..." />
                 <PromptInputFooter>
-                  <div className="flex items-center gap-2">
-                    <ModelSelector
-                      open={isSelectorOpen}
-                      onOpenChange={setIsSelectorOpen}
-                    >
-                      <ModelSelectorTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="gap-2 px-2"
-                        >
-                          <div
-                            className="size-2 rounded-full"
-                            style={{ backgroundColor: selectedPersona.color }}
-                          />
-                          <span className="max-w-[100px] truncate text-xs font-medium">
-                            {selectedPersona.name.split(' - ')[0]}
-                          </span>
-                          <ChevronDown className="size-3 opacity-50" />
-                        </Button>
-                      </ModelSelectorTrigger>
-                      <ModelSelectorContent title="Select Persona">
-                        <ModelSelectorInput placeholder="Search personas..." />
-                        <ModelSelectorList>
-                          <ModelSelectorEmpty>
-                            No persona found.
-                          </ModelSelectorEmpty>
-                          <ModelSelectorGroup heading="MBTI Personas">
-                            {personas.map((persona) => (
-                              <ModelSelectorItem
-                                key={persona.id}
-                                value={persona.name}
-                                onSelect={() => {
-                                  setSelectedPersonaId(persona.id);
-                                  setIsSelectorOpen(false);
-                                }}
-                                className="flex items-center gap-2 px-2 py-3"
-                              >
-                                <div
-                                  className="size-3 shrink-0 rounded-full"
-                                  style={{ backgroundColor: persona.color }}
-                                />
-                                <div className="flex flex-col gap-0.5">
-                                  <ModelSelectorName className="font-medium">
-                                    {persona.name}
-                                  </ModelSelectorName>
-                                  <span className="text-muted-foreground text-xs">
-                                    {persona.description}
-                                  </span>
-                                </div>
-                              </ModelSelectorItem>
-                            ))}
-                          </ModelSelectorGroup>
-                        </ModelSelectorList>
-                      </ModelSelectorContent>
-                    </ModelSelector>
-                  </div>
                   <PromptInputSubmit
                     status={status === 'streaming' ? 'streaming' : 'ready'}
                   />
